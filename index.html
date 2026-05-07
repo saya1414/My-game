@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Objects / Scenarios / Twists</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="header">
+        <h1>Objects / Scenarios / Twists</h1>
+        <p>2–3 player party card game</p>
+      </header>
+
+      <section class="panel setup" id="setupPanel">
+        <h2>Setup</h2>
+        <div class="row">
+          <label for="playerCount">Players</label>
+          <select id="playerCount">
+            <option value="2">2</option>
+            <option value="3" selected>3</option>
+          </select>
+        </div>
+        <div id="nameFields" class="name-fields"></div>
+
+        <h3>My Custom Deck Files</h3>
+        <p class="help-text">Use one line per card in each .txt file.</p>
+        <div class="file-grid">
+          <label class="file-field">
+            Objects (.txt)
+            <input id="objectsFileInput" type="file" accept=".txt,text/plain" />
+          </label>
+
+          <label class="file-field">
+            Scenarios (.txt)
+            <input id="scenariosFileInput" type="file" accept=".txt,text/plain" />
+          </label>
+
+          <label class="file-field">
+            Twists (.txt)
+            <input id="twistsFileInput" type="file" accept=".txt,text/plain" />
+          </label>
+        </div>
+        <button id="loadCustomBtn" type="button" class="secondary">Load My Decks</button>
+        <p id="customDeckStatus" class="help-text">Mode: Built-in Decks</p>
+
+        <button id="startGameBtn">Start Game</button>
+      </section>
+
+      <section class="panel game hidden" id="gamePanel">
+        <div class="status">
+          <p><strong>Current Player:</strong> <span id="currentPlayer">-</span></p>
+          <p><strong>Round:</strong> <span id="roundNumber">1</span></p>
+        </div>
+
+        <div class="decks">
+          <article class="card-block">
+            <h3>Object</h3>
+            <p id="objectCard" class="card-text">Press “Draw Cards”</p>
+          </article>
+
+          <article class="card-block">
+            <h3>Scenario</h3>
+            <p id="scenarioCard" class="card-text">Press “Draw Cards”</p>
+          </article>
+
+          <article class="card-block">
+            <h3>Twist</h3>
+            <p id="twistCard" class="card-text">Press “Draw Cards”</p>
+          </article>
+        </div>
+
+        <div class="controls">
+          <label for="deckMode">Deck Mode</label>
+          <select id="deckMode">
+            <option value="default" selected>Built-in Decks</option>
+            <option value="custom">My Decks</option>
+          </select>
+
+          <label for="objectDrawCount">Objects per draw</label>
+          <select id="objectDrawCount">
+            <option value="1" selected>1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+          </select>
+          <button id="drawObjectsBtn">Draw Objects</button>
+          <button id="drawScenarioBtn">Draw Scenario</button>
+          <button id="drawTwistBtn">Draw Twist</button>
+          <button id="resetBtn" class="secondary">New Game</button>
+        </div>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>

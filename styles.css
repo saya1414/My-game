@@ -1,0 +1,182 @@
+:root {
+  color-scheme: light;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #eef2ff;
+  color: #1f2a44;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+}
+
+.app {
+  width: min(1220px, 97vw);
+  padding: 1.8rem;
+  display: grid;
+  gap: 1.25rem;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 2.5rem;
+}
+
+.header p {
+  margin: 0.35rem 0 0;
+  color: #475569;
+  font-size: 1.1rem;
+}
+
+.panel {
+  background: #dbe4ff;
+  border: 1px solid #9fb3ff;
+  border-radius: 14px;
+  padding: 1.35rem;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+}
+
+.row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.name-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.6rem;
+  margin-bottom: 0.85rem;
+}
+
+.help-text {
+  margin-top: 0.4rem;
+  margin-bottom: 0.8rem;
+  color: #334172;
+}
+
+.file-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 0.8rem;
+  margin-bottom: 0.8rem;
+}
+
+.file-field {
+  display: grid;
+  gap: 0.4rem;
+  font-weight: 600;
+  color: #334172;
+}
+
+input,
+select,
+button {
+  border-radius: 8px;
+  border: none;
+  padding: 0.85rem 1rem;
+  font: inherit;
+}
+
+input,
+select {
+  background: #f4f7ff;
+  color: #1f2a44;
+  border: 1px solid #b8c6ff;
+}
+
+button {
+  background: #4f46e5;
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button.secondary {
+  background: #6366f1;
+  color: #ffffff;
+}
+
+button:hover {
+  filter: brightness(1.05);
+}
+
+.hidden {
+  display: none;
+}
+
+.decks {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.card-block {
+  background: #eef2ff;
+  border: 1px solid #b8c6ff;
+  border-radius: 12px;
+  padding: 1.1rem;
+  min-height: 220px;
+}
+
+.scoreboard.panel {
+  background: #e7edff;
+  border: 1px solid #a8bcff;
+}
+
+.controls label {
+  font-weight: 600;
+  color: #334172;
+}
+
+.card-block h3 {
+  margin-top: 0;
+  font-size: 1.3rem;
+}
+
+.card-text {
+  line-height: 1.5;
+  font-size: 1.15rem;
+}
+
+#objectCard {
+  white-space: normal;
+  line-height: 1.45;
+}
+
+.object-entry {
+  display: block;
+}
+
+.object-entry + .object-entry {
+  margin-top: 0.7rem;
+}
+
+.controls {
+  margin-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.scoreboard {
+  margin-top: 1rem;
+}
+
+#scoreList {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+#scoreList li {
+  margin: 0.2rem 0;
+}

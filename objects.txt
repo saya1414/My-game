@@ -1,0 +1,10 @@
+Umbrella
+Mirror
+Old Key
+Backpack
+Lantern
+Map
+Toy Robot
+Broken Clock
+Tea Cup
+Notebook

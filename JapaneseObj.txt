@@ -1,0 +1,20 @@
+冷蔵庫（れいぞうこ / reizouko）
+電子レンジ（でんしレンジ / denshi renji）
+炊飯器（すいはんき / suihanki）
+やかん（yakan）
+急須（きゅうす / kyuusu）
+箸（はし / hashi）
+茶碗（ちゃわん / chawan）
+布団（ふとん / futon）
+枕（まくら / makura）
+座布団（ざぶとん / zabuton）
+畳（たたみ / tatami）
+障子（しょうじ / shouji）
+カーテン（kaaten）
+机（つくえ / tsukue）
+椅子（いす / isu）
+本棚（ほんだな / hondana）
+ゴミ箱（ごみばこ / gomibako）
+洗濯機（せんたくき / sentakuki）
+洗面台（せんめんだい / senmendai）
+鏡（かがみ / kagami）
