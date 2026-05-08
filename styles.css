@@ -180,3 +180,64 @@ button:hover {
 #scoreList li {
   margin: 0.2rem 0;
 }
+
+.mp-row {
+  flex-wrap: wrap;
+}
+
+.mp-or {
+  color: #475569;
+  font-weight: 600;
+}
+
+.mp-mini {
+  padding: 0.4rem 0.7rem;
+  font-size: 0.9rem;
+}
+
+#mpPlayerList {
+  margin: 0.3rem 0 0.8rem;
+  padding-left: 1.2rem;
+}
+
+#mpPlayerList li {
+  margin: 0.2rem 0;
+}
+
+#mpPlayerList li.is-host::after {
+  content: " (host)";
+  color: #4f46e5;
+  font-weight: 600;
+}
+
+#mpPlayerList li.is-you::before {
+  content: "👤 ";
+}
+
+.mp-banner {
+  background: #4f46e5;
+  color: #ffffff;
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  margin-bottom: 0.9rem;
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.mp-banner .mp-banner-role {
+  background: rgba(255, 255, 255, 0.18);
+  padding: 0.15rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+button.host-only:disabled,
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: none;
+}
