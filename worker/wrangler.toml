@@ -2,6 +2,11 @@ name = "my-game-rooms"
 main = "src/index.js"
 compatibility_date = "2025-05-01"
 
+# Empty assets dir to prevent wrangler from auto-detecting the parent
+# project's index.html as static assets.
+[assets]
+directory = "./public"
+
 [[durable_objects.bindings]]
 name = "GAME_ROOM"
 class_name = "GameRoom"

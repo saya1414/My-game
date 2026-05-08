@@ -57,7 +57,7 @@ const state = {
 // e.g. "https://my-game-rooms.YOUR-SUBDOMAIN.workers.dev".
 // Use "" to disable multiplayer (the multiplayer panel will show a notice).
 // ---------------------------------------------------------------------------
-const MP_WORKER_URL = "";
+const MP_WORKER_URL = "https://my-game-rooms.october2920.workers.dev";
 
 const mp = {
   enabled: false,
