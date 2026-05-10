@@ -3,132 +3,206 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Objects / Scenarios / Twists</title>
+    <title>Lumanare</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <main class="app">
-      <header class="header">
-        <h1>Objects / Scenarios / Twists</h1>
-        <p>2–3 player party card game</p>
-      </header>
 
-      <section class="panel" id="multiplayerPanel">
-        <h2>Multiplayer</h2>
-        <p class="help-text">Play locally on this device, or create a room and share the code with friends.</p>
-        <div class="row mp-row">
-          <label for="mpNameInput">Your name</label>
-          <input id="mpNameInput" type="text" maxlength="40" placeholder="Your name" />
-        </div>
-        <div class="row mp-row">
-          <button id="createRoomBtn" type="button">Create Room</button>
-          <span class="mp-or">or</span>
-          <input id="joinRoomInput" type="text" maxlength="32" placeholder="ROOM CODE" />
-          <button id="joinRoomBtn" type="button">Join Room</button>
-        </div>
-        <div id="mpStatus" class="help-text"></div>
+    <!-- GLOBAL NAV (hidden on screen1) -->
+    <nav id="globalNav" class="global-nav hidden">
+      <button id="homeNavBtn" class="home-nav-btn">
+        <span class="home-nav-logo">&#x1F56F;&#xFE0F;</span>
+        <span class="home-nav-name">Lumanare</span>
+      </button>
+    </nav>
 
-        <div id="mpLobby" class="hidden">
-          <p>Room code: <strong id="mpRoomCode"></strong> <button id="copyRoomBtn" type="button" class="secondary mp-mini">Copy</button></p>
-          <p class="help-text">Share this code (or the URL) with friends to let them join.</p>
-          <p><strong>Players in room:</strong></p>
-          <ul id="mpPlayerList"></ul>
-          <div class="row mp-row">
-            <button id="mpStartGameBtn" type="button" class="hidden">Start Game</button>
-            <button id="mpLeaveBtn" type="button" class="secondary">Leave Room</button>
-          </div>
-          <p id="mpHostNote" class="help-text"></p>
-        </div>
-      </section>
+    <!-- SCREEN 1: START -->
+    <div id="screen1" class="screen active">
+      <div class="start-card">
+        <div class="logo-placeholder">&#x1F56F;&#xFE0F;</div>
+        <h1 class="game-title">Lumanare</h1>
 
-      <section class="panel setup" id="setupPanel">
-        <h2>Setup</h2>
-        <div class="row">
-          <label for="playerCount">Players</label>
-          <select id="playerCount">
-            <option value="2">2</option>
-            <option value="3" selected>3</option>
+        <div class="player-count-section">
+          <p class="section-label">How many players?</p>
+          <select id="playerCount" class="count-dropdown">
+            <option value="2">2 players</option>
+            <option value="3" selected>3 players</option>
+            <option value="4">4 players</option>
+            <option value="5">5 players</option>
+            <option value="6">6 players</option>
+            <option value="7">7 players</option>
+            <option value="8">8 players</option>
+            <option value="9">9 players</option>
+            <option value="10">10 players</option>
           </select>
         </div>
+
+        <button id="goToLobbyBtn" class="btn-primary btn-big">Play! &#x1F3B2;</button>
+      </div>
+    </div>
+
+    <!-- SCREEN 2: LOBBY / SETUP -->
+    <div id="screen2" class="screen">
+      <div class="lobby-card">
+        <button class="btn-back" id="backToStartBtn">&#x2190; Back</button>
+        <h2 class="lobby-title">Who&#x2019;s playing?</h2>
+
         <div id="nameFields" class="name-fields"></div>
 
-        <h3>My Custom Deck Files</h3>
-        <p class="help-text">Use one line per card in each .txt file.</p>
-        <div class="file-grid">
-          <label class="file-field">
-            Objects (.txt)
-            <input id="objectsFileInput" type="file" accept=".txt,text/plain" />
-          </label>
+        <details class="collapsible">
+          <summary>&#x1F0CF; Custom Decks</summary>
+          <p class="help-text">Use one line per card in each .txt file.</p>
+          <div class="file-grid">
+            <label class="file-field">
+              Objects (.txt)
+              <span class="file-upload-btn" id="objectsUploadBtn">&#x1F4C2; Choose file</span>
+              <input id="objectsFileInput" type="file" accept=".txt,text/plain" />
+            </label>
+            <label class="file-field">
+              Scenarios (.txt)
+              <span class="file-upload-btn" id="scenariosUploadBtn">&#x1F4C2; Choose file</span>
+              <input id="scenariosFileInput" type="file" accept=".txt,text/plain" />
+            </label>
+            <label class="file-field">
+              Twists (.txt)
+              <span class="file-upload-btn" id="twistsUploadBtn">&#x1F4C2; Choose file</span>
+              <input id="twistsFileInput" type="file" accept=".txt,text/plain" />
+            </label>
+          </div>
+          <button id="loadCustomBtn" class="btn-secondary">Load My Decks</button>
+          <p id="customDeckStatus" class="help-text">Mode: Built-in Decks</p>
+        </details>
 
-          <label class="file-field">
-            Scenarios (.txt)
-            <input id="scenariosFileInput" type="file" accept=".txt,text/plain" />
-          </label>
+        <details class="collapsible">
+          <summary>&#x1F310; Multiplayer</summary>
+          <p class="help-text">Create a room and share the code with friends.</p>
+          <div class="row mp-row">
+            <label for="mpNameInput">Your name</label>
+            <input id="mpNameInput" type="text" maxlength="40" placeholder="Your name" />
+          </div>
+          <div class="row mp-row">
+            <button id="createRoomBtn" class="btn-secondary">Create Room</button>
+            <span class="mp-or">or</span>
+            <input id="joinRoomInput" type="text" maxlength="32" placeholder="ROOM CODE" />
+            <button id="joinRoomBtn" class="btn-secondary">Join Room</button>
+          </div>
+          <div id="mpStatus" class="help-text"></div>
+          <div id="mpLobby" class="hidden">
+            <p>Room: <strong id="mpRoomCode"></strong> <button id="copyRoomBtn" class="btn-secondary mp-mini">Copy</button></p>
+            <p class="help-text">Share this code with friends.</p>
+            <p><strong>Players:</strong></p>
+            <ul id="mpPlayerList"></ul>
+            <div class="row mp-row">
+              <button id="mpStartGameBtn" class="btn-primary hidden">Start Game</button>
+              <button id="mpLeaveBtn" class="btn-secondary">Leave Room</button>
+            </div>
+            <p id="mpHostNote" class="help-text"></p>
+          </div>
+        </details>
 
-          <label class="file-field">
-            Twists (.txt)
-            <input id="twistsFileInput" type="file" accept=".txt,text/plain" />
-          </label>
-        </div>
-        <button id="loadCustomBtn" type="button" class="secondary">Load My Decks</button>
-        <p id="customDeckStatus" class="help-text">Mode: Built-in Decks</p>
+        <button id="startGameBtn" class="btn-primary btn-big">Start Game &#x1F680;</button>
+      </div>
+    </div>
 
-        <button id="startGameBtn">Start Game</button>
-      </section>
-
-      <section class="panel game hidden" id="gamePanel">
+    <!-- SCREEN 3: GAME / DRAWING -->
+    <div id="screen3" class="screen">
+      <main class="game-layout">
         <div id="mpBanner" class="mp-banner hidden"></div>
-        <div class="status">
-          <p><strong>Current Player:</strong> <span id="currentPlayer">-</span></p>
-          <p><strong>Round:</strong> <span id="roundNumber">1</span></p>
+
+        <div class="game-status">
+          <span class="status-pill">Round <span id="roundNumber">1</span></span>
+          <span class="status-pill" id="currentPlayerPill">&#x1F464; <span id="currentPlayerName">Player 1</span></span>
         </div>
 
         <div class="decks">
-          <article class="card-block">
-            <h3>Object</h3>
-            <p id="objectCard" class="card-text">Press “Draw Cards”</p>
+          <article class="card-block card-object">
+            <h3>Objects</h3>
+            <p id="objectCard" class="card-text">Draw your objects below</p>
           </article>
-
-          <article class="card-block">
-            <h3>Scenario</h3>
-            <p id="scenarioCard" class="card-text">Press “Draw Cards”</p>
-          </article>
-
-          <article class="card-block">
-            <h3>Twist</h3>
-            <p id="twistCard" class="card-text">Press “Draw Cards”</p>
-          </article>
+          <div id="scenarioCardWrap" style="display:none">
+            <article class="card-block card-scenario">
+              <h3>Scenario</h3>
+              <p id="scenarioCard" class="card-text">Press Draw Scenario</p>
+            </article>
+          </div>
+          <div id="twistCardWrap" style="display:none">
+            <article class="card-block card-twist">
+              <h3>Twist</h3>
+              <p id="twistCard" class="card-text">Press Draw Twist</p>
+            </article>
+          </div>
         </div>
 
         <div class="controls">
-          <label for="deckMode">Deck Mode</label>
-          <select id="deckMode">
-            <option value="default" selected>Built-in Decks</option>
-            <option value="custom">My Decks</option>
-          </select>
-
-          <label for="objectDrawCount">Objects per draw</label>
-          <select id="objectDrawCount">
-            <option value="1" selected>1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-            <option value="5">5</option>
-            <option value="6">6</option>
-            <option value="7">7</option>
-            <option value="8">8</option>
-            <option value="9">9</option>
-            <option value="10">10</option>
-          </select>
-          <button id="drawObjectsBtn">Draw Objects</button>
-          <button id="drawScenarioBtn">Draw Scenario</button>
-          <button id="drawTwistBtn">Draw Twist</button>
-          <button id="nextPlayerBtn">Next Player</button>
-          <button id="resetBtn" class="secondary">New Game</button>
+          <div class="controls-row">
+            <label for="deckMode">Deck</label>
+            <select id="deckMode">
+              <option value="default" selected>Built-in</option>
+              <option value="custom">My Decks</option>
+            </select>
+            <label for="objectDrawCount">Objects</label>
+            <select id="objectDrawCount">
+              <option value="1" selected>1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+              <option value="9">9</option>
+              <option value="10">10</option>
+            </select>
+          </div>
+          <div class="controls-row">
+            <button id="drawObjectsBtn" class="btn-card btn-obj">&#x1F3AF; Draw My Objects</button>
+            <button id="passDeviceBtn" class="btn-card btn-pass hidden">&#x1F4F1; Pass to <span id="nextPlayerName">next player</span> &#x2192;</button>
+            <button id="drawScenarioBtn" class="btn-card btn-scen host-only-el hidden">&#x1F4D6; Draw Scenario</button>
+            <button id="drawTwistBtn" class="btn-card btn-twist host-only-el hidden">&#x1F300; Draw Twist</button>
+            <button id="showSummaryBtn" class="btn-card btn-summary host-only-el hidden">&#x1F3C1; Show Summary</button>
+            <button id="resetBtn" class="btn-secondary host-only-el hidden">New Game</button>
+          </div>
         </div>
-      </section>
-    </main>
+      </main>
+    </div>
 
+    <!-- SCREEN 4: SUMMARY -->
+    <div id="screen4" class="screen">
+      <main class="summary-layout">
+        <h2 class="summary-title">&#x1F3C1; Round <span id="summaryRound">1</span> Summary</h2>
+
+        <div class="summary-cards">
+          <div class="summary-card summary-scenario">
+            <div class="summary-card-label">&#x1F4D6; Scenario</div>
+            <div id="summaryScenario" class="summary-card-text">—</div>
+          </div>
+          <div class="summary-card summary-twist">
+            <div class="summary-card-label">&#x1F300; Twist</div>
+            <div id="summaryTwist" class="summary-card-text">—</div>
+          </div>
+        </div>
+
+        <h3 class="summary-objects-title">&#x1F0CF; Everyone&#x2019;s Objects</h3>
+        <div id="summaryObjectsGrid" class="summary-objects-grid"></div>
+
+        <div class="summary-actions">
+          <button id="nextRoundBtn" class="btn-primary host-only-el hidden">Next Round &#x2192;</button>
+          <button id="summaryResetBtn" class="btn-secondary host-only-el hidden">New Game</button>
+        </div>
+      </main>
+    </div>
+
+    <!-- REVEAL OVERLAY -->
+    <div id="revealOverlay" class="reveal-overlay hidden">
+      <div class="reveal-card" id="revealCard">
+        <div class="reveal-label" id="revealLabel">Object</div>
+        <div class="reveal-content" id="revealContent"></div>
+        <p class="reveal-hint">tap anywhere to continue</p>
+      </div>
+    </div>
     <script src="script.js"></script>
   </body>
 </html>
