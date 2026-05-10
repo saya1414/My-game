@@ -1,7 +1,6 @@
-// Cloudflare Worker entrypoint + GameRoom Durable Object.
-// One Durable Object instance per room ID. The host (first player to join, or
-// the next player in line if the host disconnects) is the only one allowed to
-// mutate game state. The server simply stores it and broadcasts.
+﻿// Cloudflare Worker entrypoint + GameRoom Durable Object.
+// One Durable Object instance per room ID.
+// Any player can draw their own objects. Host draws scenario/twist and controls phase.
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -16,13 +15,13 @@ export class GameRoom {
     this.sessions = new Map(); // ws -> { id, name }
     this.roomState = {
       started: false,
-      players: [],            // [{ id, name }]
+      phase: "drawing",         // "drawing" | "summary"
+      players: [],              // [{ id, name }]
       hostId: null,
-      currentPlayerIndex: 0,
       round: 1,
-      objects: [],            // last drawn objects
-      scenario: "",           // last drawn scenario
-      twist: "",              // last drawn twist
+      playerObjects: {},        // { playerId: { name, items: [] } }
+      scenario: "",
+      twist: "",
       deckMode: "default",
     };
   }
@@ -87,9 +86,9 @@ export class GameRoom {
       case "start": {
         if (!isHost) return;
         this.roomState.started = true;
-        this.roomState.currentPlayerIndex = 0;
+        this.roomState.phase = "drawing";
         this.roomState.round = 1;
-        this.roomState.objects = [];
+        this.roomState.playerObjects = {};
         this.roomState.scenario = "";
         this.roomState.twist = "";
         if (typeof msg.deckMode === "string") {
@@ -98,10 +97,11 @@ export class GameRoom {
         break;
       }
       case "drawObjects": {
-        if (!isHost) return;
-        this.roomState.objects = Array.isArray(msg.items)
+        // Any player can draw their own objects
+        const items = Array.isArray(msg.items)
           ? msg.items.slice(0, 20).map((x) => String(x).slice(0, 200))
           : [];
+        this.roomState.playerObjects[session.id] = { name: session.name, items };
         break;
       }
       case "drawScenario": {
@@ -114,22 +114,26 @@ export class GameRoom {
         this.roomState.twist = String(msg.item || "").slice(0, 1000);
         break;
       }
-      case "nextPlayer": {
+      case "showSummary": {
         if (!isHost) return;
-        if (this.roomState.players.length === 0) break;
-        this.roomState.currentPlayerIndex += 1;
-        if (this.roomState.currentPlayerIndex >= this.roomState.players.length) {
-          this.roomState.currentPlayerIndex = 0;
-          this.roomState.round += 1;
-        }
+        this.roomState.phase = "summary";
+        break;
+      }
+      case "nextRound": {
+        if (!isHost) return;
+        this.roomState.phase = "drawing";
+        this.roomState.round += 1;
+        this.roomState.playerObjects = {};
+        this.roomState.scenario = "";
+        this.roomState.twist = "";
         break;
       }
       case "reset": {
         if (!isHost) return;
         this.roomState.started = false;
-        this.roomState.currentPlayerIndex = 0;
+        this.roomState.phase = "drawing";
         this.roomState.round = 1;
-        this.roomState.objects = [];
+        this.roomState.playerObjects = {};
         this.roomState.scenario = "";
         this.roomState.twist = "";
         break;
@@ -143,17 +147,14 @@ export class GameRoom {
   handleClose(ws) {
     const session = this.sessions.get(ws);
     if (!session) return;
+
+    // Remove this player's objects when they leave
+    delete this.roomState.playerObjects[session.id];
     this.sessions.delete(ws);
     this.refreshPlayerList();
 
     if (session.id === this.roomState.hostId) {
       this.roomState.hostId = this.roomState.players[0]?.id || null;
-    }
-    if (
-      this.roomState.currentPlayerIndex >= this.roomState.players.length &&
-      this.roomState.players.length > 0
-    ) {
-      this.roomState.currentPlayerIndex = 0;
     }
     this.broadcastState();
   }

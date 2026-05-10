@@ -1,4 +1,4 @@
-const defaultObjects = [
+﻿const defaultObjects = [
   "Umbrella",
   "Backpack",
   "Candle",
@@ -48,7 +48,9 @@ const state = {
   activeMode: "default",
   objectsDeck: [],
   scenariosDeck: [],
-  twistsDeck: []
+  twistsDeck: [],
+  playerObjects: {},      // { playerName: [obj1, obj2, ...] }
+  objectsDrawnThisRound: false,
 };
 
 // ---------------------------------------------------------------------------
@@ -85,14 +87,26 @@ const mp = {
 
 const playerCountSelect = document.getElementById("playerCount");
 const nameFields = document.getElementById("nameFields");
-const setupPanel = document.getElementById("setupPanel");
-const gamePanel = document.getElementById("gamePanel");
+const screen2El = document.getElementById("screen2");
+const screen3El = document.getElementById("screen3");
+
+function showScreen(id) {
+  ["screen1", "screen2", "screen3", "screen4"].forEach(s => {
+    const el = document.getElementById(s);
+    if (el) el.classList.toggle("active", s === id);
+  });
+  const nav = document.getElementById("globalNav");
+  if (nav) nav.classList.toggle("hidden", id === "screen1");
+}
 
 const startGameBtn = document.getElementById("startGameBtn");
 const drawObjectsBtn = document.getElementById("drawObjectsBtn");
 const drawScenarioBtn = document.getElementById("drawScenarioBtn");
 const drawTwistBtn = document.getElementById("drawTwistBtn");
+const showSummaryBtn = document.getElementById("showSummaryBtn");
+const nextRoundBtn = document.getElementById("nextRoundBtn");
 const resetBtn = document.getElementById("resetBtn");
+const summaryResetBtn = document.getElementById("summaryResetBtn");
 const objectDrawCountSelect = document.getElementById("objectDrawCount");
 const deckModeSelect = document.getElementById("deckMode");
 const loadCustomBtn = document.getElementById("loadCustomBtn");
@@ -102,12 +116,104 @@ const scenariosFileInput = document.getElementById("scenariosFileInput");
 const twistsFileInput = document.getElementById("twistsFileInput");
 const customDeckStatusEl = document.getElementById("customDeckStatus");
 
-const currentPlayerEl = document.getElementById("currentPlayer");
+// Update styled file upload buttons when files are chosen
+[
+  ["objectsFileInput", "objectsUploadBtn"],
+  ["scenariosFileInput", "scenariosUploadBtn"],
+  ["twistsFileInput", "twistsUploadBtn"],
+].forEach(([inputId, btnId]) => {
+  const input = document.getElementById(inputId);
+  const btn = document.getElementById(btnId);
+  if (input && btn) {
+    input.addEventListener("change", () => {
+      const name = input.files?.[0]?.name;
+      if (name) {
+        btn.textContent = `✅ ${name}`;
+        btn.classList.add("has-file");
+      } else {
+        btn.textContent = "📂 Choose file";
+        btn.classList.remove("has-file");
+      }
+    });
+  }
+});
+
 const roundNumberEl = document.getElementById("roundNumber");
 
 const objectCardEl = document.getElementById("objectCard");
 const scenarioCardEl = document.getElementById("scenarioCard");
 const twistCardEl = document.getElementById("twistCard");
+
+function spawnSparkles(container) {
+  const colors = ["#a78bfa", "#f472b6", "#fb923c", "#34d399", "#60a5fa", "#facc15"];
+  const cx = container.offsetWidth / 2;
+  const cy = container.offsetHeight / 2;
+
+  for (let i = 0; i < 16; i++) {
+    const s = document.createElement("span");
+    s.className = "sparkle";
+    const size = 5 + Math.random() * 8;
+    const angle = (i / 16) * 2 * Math.PI + Math.random() * 0.4;
+    const dist = 40 + Math.random() * 80;
+    s.style.cssText = `
+      width:${size}px; height:${size}px;
+      background:${colors[i % colors.length]};
+      left:${cx}px; top:${cy}px;
+      --tx:${Math.cos(angle) * dist}px;
+      --ty:${Math.sin(angle) * dist}px;
+    `;
+    container.appendChild(s);
+    s.addEventListener("animationend", () => s.remove(), { once: true });
+  }
+}
+
+// ── Reveal overlay ────────────────────────
+const revealOverlay = document.getElementById("revealOverlay");
+const revealCard    = document.getElementById("revealCard");
+const revealLabel   = document.getElementById("revealLabel");
+const revealContent = document.getElementById("revealContent");
+
+let revealResolve = null;
+
+function showReveal(type, title, htmlContent) {
+  return new Promise((resolve) => {
+    revealResolve = resolve;
+
+    revealLabel.textContent = title;
+    revealLabel.className = "reveal-label label-" + type;
+    revealContent.innerHTML = htmlContent;
+
+    revealCard.style.animation = "none";
+    void revealCard.offsetWidth;
+    revealCard.style.animation = "";
+
+    revealOverlay.classList.remove("hidden");
+
+    // Sparkles after card animates in
+    setTimeout(() => spawnSparkles(revealCard), 300);
+  });
+}
+
+function dismissReveal() {
+  revealOverlay.classList.add("hidden");
+  if (revealResolve) { revealResolve(); revealResolve = null; }
+}
+
+revealOverlay.addEventListener("click", dismissReveal);
+
+function setCardText(el, text) {
+  el.classList.remove("card-reveal");
+  void el.offsetWidth;
+  el.textContent = text;
+  el.classList.add("card-reveal");
+}
+
+function setCardHTML(el, html) {
+  el.classList.remove("card-reveal");
+  void el.offsetWidth;
+  el.innerHTML = html;
+  el.classList.add("card-reveal");
+}
 
 function escapeHtml(value) {
   return value
@@ -119,9 +225,9 @@ function escapeHtml(value) {
 }
 
 function renderObjectEntries(objects) {
-  objectCardEl.innerHTML = objects
+  setCardHTML(objectCardEl, objects
     .map((item) => `<span class="object-entry">${escapeHtml(item)}</span>`)
-    .join("");
+    .join(""));
 }
 
 function getDeckSourcesForMode(mode) {
@@ -180,9 +286,9 @@ function applyDeckMode(mode) {
   }
 
   if (!gamePanel.classList.contains("hidden")) {
-    objectCardEl.textContent = "Press “Draw Objects”";
-    scenarioCardEl.textContent = "Press “Draw Scenario”";
-    twistCardEl.textContent = "Press “Draw Twist”";
+    setCardText(objectCardEl, "Press “Draw Objects”");
+    setCardText(scenarioCardEl, "Press “Draw Scenario”");
+    setCardText(twistCardEl, "Press “Draw Twist”");
   }
 }
 
@@ -227,25 +333,62 @@ function getPlayerNames() {
 }
 
 function renderStatus() {
-  const current = state.players[state.currentPlayerIndex];
-  currentPlayerEl.textContent = current?.name || "-";
   roundNumberEl.textContent = String(state.round);
+  const current = state.players[state.currentPlayerIndex];
+  const pill = document.getElementById("currentPlayerPill");
+  const nameEl = document.getElementById("currentPlayerName");
+  if (current && nameEl) {
+    nameEl.textContent = current.name;
+    if (pill) pill.classList.remove("hidden");
+  }
+  // Update pass button label
+  const nextIndex = (state.currentPlayerIndex + 1) % state.players.length;
+  const nextEl = document.getElementById("nextPlayerName");
+  if (nextEl && state.players[nextIndex]) {
+    nextEl.textContent = state.players[nextIndex].name;
+  }
+}
+
+function renderSummaryScreen(s) {
+  document.getElementById("summaryRound").textContent = String(s.round);
+  document.getElementById("summaryScenario").textContent = s.scenario || "—";
+  document.getElementById("summaryTwist").textContent = s.twist || "—";
+
+  const grid = document.getElementById("summaryObjectsGrid");
+  grid.innerHTML = "";
+  for (const [, entry] of Object.entries(s.playerObjects || {})) {
+    const card = document.createElement("div");
+    card.className = "player-obj-card";
+    card.innerHTML = `<div class="player-name">${escapeHtml(entry.name)}</div>
+      <div class="player-items">${(entry.items || []).map(i => escapeHtml(i)).join("<br>")}</div>`;
+    grid.appendChild(card);
+  }
+  showScreen("screen4");
 }
 
 function drawObjects() {
-  if (mp.enabled && !mp.isHost()) return;
   const sources = getDeckSourcesForMode(state.activeMode);
   const objectDrawCount = Number(objectDrawCountSelect.value);
   const drawnObjects = [];
-
   for (let index = 0; index < objectDrawCount; index += 1) {
     drawnObjects.push(drawFromDeck("objectsDeck", sources.objects));
   }
-
   if (mp.enabled) {
     mp.send({ type: "drawObjects", items: drawnObjects });
   } else {
-    renderObjectEntries(drawnObjects);
+    const playerName = state.players[state.currentPlayerIndex]?.name || "Player";
+    state.playerObjects[playerName] = { name: playerName, items: drawnObjects };
+  }
+  renderObjectEntries(drawnObjects);
+  const html = drawnObjects.map(o => `<div style="margin:0.3rem 0">${escapeHtml(o)}</div>`).join("");
+  showReveal("object", "🎯 Your Objects", html);
+
+  if (!mp.enabled) {
+    // Show pass-device button if more players haven't drawn yet
+    const passBtn = document.getElementById("passDeviceBtn");
+    const allDrawn = state.players.every(p => state.playerObjects[p.name]);
+    if (passBtn) passBtn.classList.toggle("hidden", allDrawn);
+    drawObjectsBtn.classList.toggle("hidden", !allDrawn);
   }
 }
 
@@ -253,70 +396,52 @@ function drawScenario() {
   if (mp.enabled && !mp.isHost()) return;
   const sources = getDeckSourcesForMode(state.activeMode);
   const item = drawFromDeck("scenariosDeck", sources.scenarios);
-  if (mp.enabled) {
-    mp.send({ type: "drawScenario", item });
-  } else {
-    scenarioCardEl.textContent = item;
-  }
+  if (mp.enabled) { mp.send({ type: "drawScenario", item }); }
+  setCardText(scenarioCardEl, item);
+  document.getElementById("scenarioCardWrap").style.display = "";
+  showReveal("scenario", "📖 Scenario", escapeHtml(item));
 }
 
 function drawTwist() {
   if (mp.enabled && !mp.isHost()) return;
   const sources = getDeckSourcesForMode(state.activeMode);
   const item = drawFromDeck("twistsDeck", sources.twists);
-  if (mp.enabled) {
-    mp.send({ type: "drawTwist", item });
-  } else {
-    twistCardEl.textContent = item;
-  }
+  if (mp.enabled) { mp.send({ type: "drawTwist", item }); }
+  setCardText(twistCardEl, item);
+  document.getElementById("twistCardWrap").style.display = "";
+  showReveal("twist", "🌀 Twist", escapeHtml(item));
+}
+
+function setupHostControls(isHost) {
+  document.querySelectorAll(".host-only-el").forEach(el => {
+    el.classList.toggle("hidden", !isHost);
+  });
+  document.querySelectorAll(".host-label").forEach(el => {
+    el.classList.toggle("hidden", !isHost);
+  });
 }
 
 function startGame() {
   if (mp.enabled) {
-    if (!mp.isHost()) {
-      mp.setStatus("Only the host can start the game.");
-      return;
-    }
+    if (!mp.isHost()) { mp.setStatus("Only the host can start the game."); return; }
     resetShuffledDecks();
     mp.send({ type: "start", deckMode: state.activeMode });
     return;
   }
-
   const names = getPlayerNames();
   state.players = names.map((name) => ({ name }));
   state.currentPlayerIndex = 0;
   state.round = 1;
-
+  state.playerObjects = {};
   resetShuffledDecks();
-
-  setupPanel.classList.add("hidden");
-  gamePanel.classList.remove("hidden");
-
-  objectCardEl.textContent = "Press “Draw Objects”";
-  scenarioCardEl.textContent = "Press “Draw Scenario”";
-  twistCardEl.textContent = "Press “Draw Twist”";
-
-  renderStatus();
-}
-
-function nextPlayer() {
-  if (mp.enabled) {
-    if (!mp.isHost()) return;
-    mp.send({ type: "nextPlayer" });
-    return;
-  }
-
-  if (state.players.length === 0) {
-    return;
-  }
-
-  state.currentPlayerIndex += 1;
-
-  if (state.currentPlayerIndex >= state.players.length) {
-    state.currentPlayerIndex = 0;
-    state.round += 1;
-  }
-
+  showScreen("screen3");
+  setupHostControls(true);
+  document.getElementById("scenarioCardWrap").style.display = "none";
+  document.getElementById("twistCardWrap").style.display = "none";
+  const passBtn2 = document.getElementById("passDeviceBtn");
+  if (passBtn2) passBtn2.classList.add("hidden");
+  drawObjectsBtn.classList.remove("hidden");
+  setCardText(objectCardEl, "Draw your objects below");
   renderStatus();
 }
 
@@ -326,19 +451,16 @@ function resetGame() {
     mp.send({ type: "reset" });
     return;
   }
-
   state.players = [];
   state.currentPlayerIndex = 0;
   state.round = 1;
   state.objectsDeck = [];
   state.scenariosDeck = [];
   state.twistsDeck = [];
-
-  gamePanel.classList.add("hidden");
-  setupPanel.classList.remove("hidden");
+  state.playerObjects = {};
+  showScreen("screen1");
   renderNameFields();
 }
-
 async function loadCustomDecks() {
   const objectsFile = objectsFileInput.files?.[0];
   const scenariosFile = scenariosFileInput.files?.[0];
@@ -382,8 +504,20 @@ startGameBtn.addEventListener("click", startGame);
 drawObjectsBtn.addEventListener("click", drawObjects);
 drawScenarioBtn.addEventListener("click", drawScenario);
 drawTwistBtn.addEventListener("click", drawTwist);
-document.getElementById("nextPlayerBtn").addEventListener("click", nextPlayer);
 resetBtn.addEventListener("click", resetGame);
+
+// Pass device to next player (local mode)
+const passDeviceBtn = document.getElementById("passDeviceBtn");
+if (passDeviceBtn) {
+  passDeviceBtn.addEventListener("click", () => {
+    state.currentPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
+    passDeviceBtn.classList.add("hidden");
+    drawObjectsBtn.classList.remove("hidden");
+    setCardText(objectCardEl, "Draw your objects below");
+    renderStatus();
+  });
+}
+
 loadCustomBtn.addEventListener("click", () => {
   loadCustomDecks().catch(() => {
     setStatusMessage("Could not read one or more files. Please try again.");
@@ -391,6 +525,23 @@ loadCustomBtn.addEventListener("click", () => {
 });
 deckModeSelect.addEventListener("change", (event) => {
   applyDeckMode(event.target.value);
+});
+
+// Screen 1 → Screen 2
+document.getElementById("goToLobbyBtn").addEventListener("click", () => {
+  renderNameFields();
+  showScreen("screen2");
+});
+
+// Screen 2 → Screen 1
+document.getElementById("backToStartBtn").addEventListener("click", () => {
+  showScreen("screen1");
+});
+
+// Global nav home button
+document.getElementById("homeNavBtn").addEventListener("click", () => {
+  if (mp.enabled) leaveRoom();
+  showScreen("screen1");
 });
 
 renderNameFields();
@@ -413,7 +564,6 @@ const createRoomBtn = document.getElementById("createRoomBtn");
 const joinRoomInput = document.getElementById("joinRoomInput");
 const joinRoomBtn = document.getElementById("joinRoomBtn");
 const copyRoomBtn = document.getElementById("copyRoomBtn");
-const nextPlayerBtn = document.getElementById("nextPlayerBtn");
 
 // Restore last name
 try {
@@ -522,8 +672,7 @@ function leaveRoom() {
   }
   mpLobbyEl.classList.add("hidden");
   mpBannerEl.classList.add("hidden");
-  setupPanel.classList.remove("hidden");
-  gamePanel.classList.add("hidden");
+  showScreen("screen2");
   mp.setStatus("");
   try {
     const newUrl = new URL(window.location.href);
@@ -533,18 +682,12 @@ function leaveRoom() {
 }
 
 function applyServerState(s) {
-  // Sync local game state from authoritative server state
   state.players = s.players.map((p) => ({ name: p.name, id: p.id }));
-  state.currentPlayerIndex = Math.min(
-    s.currentPlayerIndex,
-    Math.max(0, state.players.length - 1)
-  );
   state.round = s.round;
 
   // Lobby UI
   mpLobbyEl.classList.remove("hidden");
   mpRoomCodeEl.textContent = mp.roomCode || "";
-
   mpPlayerListEl.innerHTML = "";
   for (const p of s.players) {
     const li = document.createElement("li");
@@ -557,51 +700,59 @@ function applyServerState(s) {
   const youAreHost = mp.isHost();
   mpStartGameBtn.classList.toggle("hidden", !youAreHost || s.started);
   mpHostNoteEl.textContent = youAreHost
-    ? "You are the host. You control the deck and draws."
+    ? "You are the host. You control draws."
     : "Waiting for the host to start / draw cards.";
 
-  // Panel transitions based on game start
-  if (s.started) {
-    setupPanel.classList.add("hidden");
-    gamePanel.classList.remove("hidden");
-
-    // Banner
-    mpBannerEl.classList.remove("hidden");
-    mpBannerEl.innerHTML = `
-      <span>Room <strong>${escapeHtml(mp.roomCode || "")}</strong> &middot; ${s.players.length} player${s.players.length === 1 ? "" : "s"}</span>
-      <span class="mp-banner-role">${youAreHost ? "Host" : "Player"}</span>
-    `;
-
-    // Render shared cards from server
-    if (s.objects && s.objects.length > 0) {
-      renderObjectEntries(s.objects);
-    } else {
-      objectCardEl.textContent = "Waiting for objects\u2026";
-    }
-    scenarioCardEl.textContent = s.scenario || "Waiting for scenario\u2026";
-    twistCardEl.textContent = s.twist || "Waiting for twist\u2026";
-
-    // Render current player + round
-    renderStatus();
-
-    // Disable host-only controls for non-hosts
-    const hostButtons = [drawObjectsBtn, drawScenarioBtn, drawTwistBtn, nextPlayerBtn, resetBtn];
-    for (const btn of hostButtons) {
-      btn.disabled = !youAreHost;
-      btn.classList.toggle("host-only", true);
-    }
-  } else {
-    // Pre-game: in lobby
-    gamePanel.classList.add("hidden");
+  if (!s.started) {
     mpBannerEl.classList.add("hidden");
     if (youAreHost) {
-      // host can configure decks; show setup panel
-      setupPanel.classList.remove("hidden");
-      // Hide local player count + name fields + local start (host uses lobby start)
+      showScreen("screen2");
       startGameBtn.classList.add("hidden");
     } else {
-      setupPanel.classList.add("hidden");
+      showScreen("screen2");
     }
+    return;
+  }
+
+  // Game started
+  mpBannerEl.classList.remove("hidden");
+  mpBannerEl.innerHTML = `
+    <span>Room <strong>${escapeHtml(mp.roomCode || "")}</strong> &middot; ${s.players.length} player${s.players.length === 1 ? "" : "s"}</span>
+    <span class="mp-banner-role">${youAreHost ? "Host" : "Player"}</span>
+  `;
+  setupHostControls(youAreHost);
+
+  if (s.phase === "summary") {
+    renderSummaryScreen(s);
+    return;
+  }
+
+  // Drawing phase
+  showScreen("screen3");
+  renderStatus();
+
+  // My objects on the card
+  const myEntry = s.playerObjects?.[mp.youId];
+  if (myEntry?.items?.length) {
+    renderObjectEntries(myEntry.items);
+  } else {
+    setCardText(objectCardEl, "Draw your objects below");
+  }
+
+  // Scenario/Twist — visible if drawn
+  if (s.scenario) {
+    setCardText(scenarioCardEl, s.scenario);
+    document.getElementById("scenarioCardWrap").style.display = "";
+  } else {
+    document.getElementById("scenarioCardWrap").style.display = youAreHost ? "" : "none";
+    if (!s.scenario) setCardText(scenarioCardEl, "Draw Scenario");
+  }
+  if (s.twist) {
+    setCardText(twistCardEl, s.twist);
+    document.getElementById("twistCardWrap").style.display = "";
+  } else {
+    document.getElementById("twistCardWrap").style.display = youAreHost ? "" : "none";
+    if (!s.twist) setCardText(twistCardEl, "Draw Twist");
   }
 }
 
@@ -640,13 +791,48 @@ copyRoomBtn.addEventListener("click", async () => {
   try {
     await navigator.clipboard.writeText(shareText);
     copyRoomBtn.textContent = "Copied!";
-    setTimeout(() => {
-      copyRoomBtn.textContent = "Copy";
-    }, 1500);
+    setTimeout(() => { copyRoomBtn.textContent = "Copy"; }, 1500);
   } catch {
     mp.setStatus(`Share this link: ${shareText}`);
   }
 });
+
+if (showSummaryBtn) {
+  showSummaryBtn.addEventListener("click", () => {
+    if (mp.enabled) {
+      if (!mp.isHost()) return;
+      mp.send({ type: "showSummary" });
+    } else {
+      showSummaryLocal();
+    }
+  });
+}
+
+if (nextRoundBtn) {
+  nextRoundBtn.addEventListener("click", () => {
+    if (mp.enabled) {
+      if (!mp.isHost()) return;
+      mp.send({ type: "nextRound" });
+    } else {
+      state.round += 1;
+      state.currentPlayerIndex = 0;
+      state.playerObjects = {};
+      resetShuffledDecks();
+      showScreen("screen3");
+      document.getElementById("scenarioCardWrap").style.display = "none";
+      document.getElementById("twistCardWrap").style.display = "none";
+      const pb = document.getElementById("passDeviceBtn");
+      if (pb) pb.classList.add("hidden");
+      drawObjectsBtn.classList.remove("hidden");
+      setCardText(objectCardEl, "Draw your objects below");
+      renderStatus();
+    }
+  });
+}
+
+if (summaryResetBtn) {
+  summaryResetBtn.addEventListener("click", resetGame);
+}
 
 // If page loaded with #room=ABCDE, prefill the join input.
 (function autoJoinFromHash() {
